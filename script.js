@@ -24,16 +24,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check URL params for direct access
     const urlParams = new URLSearchParams(location.search);
-    const pageName = urlParams.get('page');
-    const isView = urlParams.get('view');
+    const editPageName = urlParams.get('page');
+    const viewPageName = urlParams.get('view');
     const pass = location.hash.slice(1);
     
-    if (pageName) {
-        if (isView) {
-            showViewPage(pageName, pass);
-        } else {
-            showEditPage(pageName);
-        }
+    if (viewPageName) {
+        showViewPage(viewPageName, pass);
+    } else if (editPageName) {
+        showEditPage(editPageName);
     }
 });
 
@@ -124,7 +122,7 @@ function showViewPage(pageName, pass) {
     document.querySelector('.container').innerHTML = `
         <div class="rule-page">
             <h1 class="main-title">${pageName}</h1>
-            <p style="color:#ff69b4;font-size:1.5em;">Momma\\'s Rules (Read Only) 💕</p>
+            <p style="color:#ff69b4;font-size:1.5em;">Momma's Rules (Read Only) 💕</p>
             
             <div class="dashboard-grid">
                 <div class="card">
