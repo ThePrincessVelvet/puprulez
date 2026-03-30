@@ -1,7 +1,7 @@
 // Puprulez - Complete with Home/Edit/View
 
 // TODO: Replace with your Turso SQLite details
-const TURSO_URL = 'libsql://puprulez-theprincessvelvet.aws-us-east-1.turso.io';
+const TURSO_URL = 'https://puprulez-theprincessvelvet.aws-us-east-1.turso.io';
 const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzQ4NDM5NTgsImlkIjoiMDE5ZDNjZjEtNjgwMS03OWIwLWFhYzYtYWYzMTcwNjJlNDJmIiwicmlkIjoiZmFlODFjZTAtZDFjYy00OWM2LWEyZGQtMDMxOWJiNjBmNzQ3In0.QWXgbPycWMiSxRVmlavU8euqVv5UKs82xTNE_6WjhghAx-J3EKzgFM699wW7CRej6wZ_nsU1St7vPEDd87BQCA';
 
 async function runSQL(sql, args = []) {
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editBtn = document.createElement('button');
     editBtn.id = 'editBtn';
     editBtn.className = 'princess-btn';
-    editBtn.innerHTML = '🔓 Edit My Rulepage';
+    editBtn.innerHTML = 'Edit My Rulepage';
     editBtn.style.marginTop = '1rem';
     
     // Create button
@@ -71,7 +71,7 @@ async function createPage() {
     const result = await runSQL('SELECT name FROM rulepages WHERE name = ?', [pageName]);
     
     if (result && result.rows.length > 0) {
-        alert('This name is already taken, please choose a different one. Try a different one.');
+        alert('This name is already taken, please choose a different one.');
         return;
     }
 
@@ -118,33 +118,33 @@ async function showEditPage(pageName) {
             <h1 class="main-title">${pageName}</h1>
             
             <div class="info-bar">
-                <span>🔑 Password: <code>${pass}</code></span>
-                <button onclick="navigator.clipboard.writeText('${viewLink}');alert('Link Copied!')" class="princess-btn" style="font-size:0.8rem; padding:8px 15px;">📋 Copy View Link</button>
+                <span>Password: <code>${pass}</code></span>
+                <button onclick="navigator.clipboard.writeText('${viewLink}');alert('Link Copied!')" class="princess-btn" style="font-size:0.8rem; padding:8px 15px;">Copy View Link</button>
             </div>
 
             <div class="dashboard-grid">
                 <div class="card">
-                    <h2>📜 Rules</h2>
+                    <h2>Rules</h2>
                     <div class="input-group">
                         <input id="newRule" placeholder="New rule...">
-                        <button onclick="addItem('rules')" class="princess-btn" style="margin:0; padding:10px 20px;">➕</button>
+                        <button onclick="addItem('rules')" class="princess-btn" style="margin:0; padding:10px 20px;">+</button>
                     </div>
                     <div id="rulesList"></div>
                 </div>
                 
                 <div class="card">
-                    <h2>🍭 Punishments</h2>
+                    <h2>Punishments</h2>
                     <div class="input-group">
                         <input id="newPun" placeholder="New punishment...">
-                        <button onclick="addItem('puns')" class="princess-btn" style="margin:0; padding:10px 20px;">➕</button>
+                        <button onclick="addItem('puns')" class="princess-btn" style="margin:0; padding:10px 20px;">+</button>
                     </div>
                     <div id="punsList"></div>
                 </div>
             </div>
             
             <div style="margin-top: 30px;">
-                <button onclick="savePage('${pageName}', true)" class="princess-btn" style="background:var(--deep-pink)">💖 SAVE CHANGES</button>
-                <button onclick="location.href='?'" class="princess-btn" style="background:#aaa">🏰 Home</button>
+                <button onclick="savePage('${pageName}', true)" class="princess-btn" style="background:var(--deep-pink)">SAVE CHANGES</button>
+                <button onclick="location.href='?'" class="princess-btn" style="background:#aaa">Home</button>
             </div>
         </div>
     `;
@@ -170,21 +170,21 @@ async function showViewPage(pageName, urlPass) {
     document.querySelector('.container').innerHTML = `
         <div class="rule-page">
             <h1 class="main-title">${pageName}</h1>
-            <p style="color:#ff69b4;font-size:1.5em;">Momma's Rules (Read Only) 💕</p>
+            <p style="color:#ff69b4;font-size:1.5em;">Momma's Rules (Read Only)</p>
             
             <div class="dashboard-grid">
                 <div class="card">
-                    <h2>📜 Rules</h2>
-                    ${rules.map(r => `<div class="rule-item">${r}</div>`).join('') || '<p>No rules 🥰</p>'}
+                    <h2>Rules</h2>
+                    ${rules.map(r => `<div class="rule-item">${r}</div>`).join('') || '<p>No rules set.</p>'}
                 </div>
                 
                 <div class="card">
-                    <h2>🍭 Punishments</h2>
-                    ${puns.map(p => `<div class="punishment-item">${p}</div>`).join('') || '<p>Be good! 👼</p>'}
+                    <h2>Punishments</h2>
+                    ${puns.map(p => `<div class="punishment-item">${p}</div>`).join('') || '<p>No punishments set.</p>'}
                 </div>
             </div>
             
-            <button onclick="location.href='?'" class="princess-btn">🏰 Home</button>
+            <button onclick="location.href='?'" class="princess-btn">Home</button>
         </div>
     `;
 }
@@ -200,7 +200,7 @@ function addItem(type) {
         const item = document.createElement('div');
         const currentPage = localStorage.getItem('currentPage');
         item.className = isRule ? 'rule-item' : 'punishment-item';
-        item.innerHTML = `<span>${text}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${currentPage}')">✕</button>`;
+        item.innerHTML = `<span>${text}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${currentPage}')">X</button>`;
         list.appendChild(item);
         input.value = '';
         savePage(currentPage);
@@ -215,7 +215,7 @@ async function savePage(pageName, showAlert = false) {
     await runSQL('UPDATE rulepages SET rules = ?, puns = ? WHERE name = ?', [JSON.stringify(rules), JSON.stringify(puns), pageName]);
     
     console.log('Saved ' + pageName);
-    if (showAlert) alert('💖 Changes saved successfully, princess! ✨');
+    if (showAlert) alert('Changes saved successfully!');
 }
 
 async function loadLists(pageName) {
@@ -231,14 +231,14 @@ async function loadLists(pageName) {
     rules.forEach(rule => {
         const item = document.createElement('div');
         item.className = 'rule-item';
-        item.innerHTML = `<span>${rule}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${pageName}')">✕</button>`;
+        item.innerHTML = `<span>${rule}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${pageName}')">X</button>`;
         rulesList.appendChild(item);
     });
     
     puns.forEach(pun => {
         const item = document.createElement('div');
         item.className = 'punishment-item';
-        item.innerHTML = `<span>${pun}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${pageName}')">✕</button>`;
+        item.innerHTML = `<span>${pun}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${pageName}')">X</button>`;
         punsList.appendChild(item);
     });
 }
