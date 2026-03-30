@@ -1,10 +1,29 @@
 // Puprulez - Complete with Home/Edit/View
 
-// TODO: Replace with your Supabase Project URL and Anon Key
-const SUPABASE_URL = 'https://wtdutuviptkwdehdpzhu.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0ZHV0dXZpcHRrd2RlaGRwemh1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDgyODg0NCwiZXhwIjoyMDkwNDA0ODQ0fQ.fkgFroBakxVmPTW36rGJouqvrj1ytSDFu2-ZvEikT20';
+// TODO: Replace with your Turso SQLite details
+const TURSO_URL = 'libsql://puprulez-theprincessvelvet.aws-us-east-1.turso.io';
+const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzQ4NDM5NTgsImlkIjoiMDE5ZDNjZjEtNjgwMS03OWIwLWFhYzYtYWYzMTcwNjJlNDJmIiwicmlkIjoiZmFlODFjZTAtZDFjYy00OWM2LWEyZGQtMDMxOWJiNjBmNzQ3In0.QWXgbPycWMiSxRVmlavU8euqVv5UKs82xTNE_6WjhghAx-J3EKzgFM699wW7CRej6wZ_nsU1St7vPEDd87BQCA';
 
-const _supabase = window.supabase ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+async function runSQL(sql, args = []) {
+    const response = await fetch(`${TURSO_URL}/v2/pipeline`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${TURSO_TOKEN}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            requests: [
+                { type: 'execute', stmt: { sql, args } },
+                { type: 'close' }
+            ]
+        })
+    });
+    const data = await response.json();
+    if (data.results && data.results[0].response.result) {
+        return data.results[0].response.result;
+    }
+    return null;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Always show homepage first
@@ -43,31 +62,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function createPage() {
-    const name = prompt('🌸 Choose a Username (Rulepage Name):');
+    const name = prompt('Choose a Rulepage name:');
     if (!name || !name.trim()) return;
     
     const pageName = name.trim();
 
-    // Check if rulepage already exists in database
-    const { data: existing } = await _supabase.from('rulepages').select('name').eq('name', pageName).single();
+    // Check if rulepage already exists in SQLite
+    const result = await runSQL('SELECT name FROM rulepages WHERE name = ?', [pageName]);
     
-    if (existing) {
-        alert('❌ This name is already taken, princess! Try a different one. ✨');
+    if (result && result.rows.length > 0) {
+        alert('This name is already taken, please choose a different one. Try a different one.');
         return;
     }
 
-    const password = prompt('🔑 Create a Password:');
+    const password = prompt('Create a Password:');
     if (!password) return;
 
-    // Save to Supabase
-    const { error } = await _supabase.from('rulepages').insert([
-        { name: pageName, pass: password, rules: [], puns: [] }
-    ]);
-
-    if (error) {
-        alert('❌ Error creating page: ' + error.message);
-        return;
-    }
+    // Save to SQLite
+    await runSQL('INSERT INTO rulepages (name, pass, rules, puns) VALUES (?, ?, "[]", "[]")', [pageName, password]);
 
     localStorage.setItem(pageName + '_pass', password);
     localStorage.setItem('currentPage', pageName);
@@ -75,14 +87,15 @@ async function createPage() {
 }
 
 async function editPage() {
-    const pageName = prompt('🌸 Enter Username:');
+    const pageName = prompt('Enter Username:');
     if (!pageName) return;
 
-    const pass = prompt('🔓 Enter Password:');
+    const pass = prompt('Enter Password:');
     
-    const { data: pageData } = await _supabase.from('rulepages').select('*').eq('name', pageName).single();
+    const result = await runSQL('SELECT pass FROM rulepages WHERE name = ?', [pageName]);
+    const storedPass = result?.rows[0]?.[0];
     
-    if (pageData && pass === pageData.pass) {
+    if (storedPass && pass === storedPass) {
         localStorage.setItem(pageName + '_pass', pass);
         localStorage.setItem('currentPage', pageName);
         location.href = '?page=' + encodeURIComponent(pageName);
@@ -92,10 +105,10 @@ async function editPage() {
 }
 
 async function showEditPage(pageName) {
-    const { data: pageData } = await _supabase.from('rulepages').select('*').eq('name', pageName).single();
-    if (!pageData) { location.href = '?'; return; }
+    const result = await runSQL('SELECT pass FROM rulepages WHERE name = ?', [pageName]);
+    if (!result || result.rows.length === 0) { location.href = '?'; return; }
 
-    const pass = pageData.pass;
+    const pass = result.rows[0][0];
     // Generates full URL without the password hash for a cleaner link
     const viewLink = window.location.origin + window.location.pathname + '?view=' + encodeURIComponent(pageName);
     localStorage.setItem('currentPage', pageName);
@@ -139,21 +152,21 @@ async function showEditPage(pageName) {
 }
 
 async function showViewPage(pageName, urlPass) {
-    const { data: pageData } = await _supabase.from('rulepages').select('*').eq('name', pageName).single();
+    const result = await runSQL('SELECT pass, rules, puns FROM rulepages WHERE name = ?', [pageName]);
     
     // If password isn't in URL hash, prompt the user for it
-    let pass = urlPass || prompt('🔓 Enter password to view this rulepage:');
+    let pass = urlPass || prompt('Enter password to view this rulepage:');
     
     if (pass === null) { location.href = '?'; return; } // Go home if canceled
 
-    if (!pageData || pass !== pageData.pass) {
+    if (!result || result.rows.length === 0 || pass !== result.rows[0][0]) {
         document.querySelector('.container').innerHTML = '<h1 class="title" style="color:#ff1493;">🔒 LOCKED</h1><p class="subtitle">Wrong password, puppy!</p>';
         return;
     }
     
-    const rules = pageData.rules || [];
-    const puns = pageData.puns || [];
-    
+    const rules = JSON.parse(result.rows[0][1] || '[]');
+    const puns = JSON.parse(result.rows[0][2] || '[]');
+
     document.querySelector('.container').innerHTML = `
         <div class="rule-page">
             <h1 class="main-title">${pageName}</h1>
@@ -199,18 +212,18 @@ async function savePage(pageName, showAlert = false) {
     const rules = Array.from(document.querySelectorAll('#rulesList .rule-item span')).map(span => span.textContent.trim());
     const puns = Array.from(document.querySelectorAll('#punsList .punishment-item span')).map(span => span.textContent.trim());
     
-    await _supabase.from('rulepages').update({ rules, puns }).eq('name', pageName);
+    await runSQL('UPDATE rulepages SET rules = ?, puns = ? WHERE name = ?', [JSON.stringify(rules), JSON.stringify(puns), pageName]);
     
     console.log('Saved ' + pageName);
     if (showAlert) alert('💖 Changes saved successfully, princess! ✨');
 }
 
 async function loadLists(pageName) {
-    const { data: pageData } = await _supabase.from('rulepages').select('rules, puns').eq('name', pageName).single();
-    if (!pageData) return;
+    const result = await runSQL('SELECT rules, puns FROM rulepages WHERE name = ?', [pageName]);
+    if (!result || result.rows.length === 0) return;
 
-    const rules = pageData.rules || [];
-    const puns = pageData.puns || [];
+    const rules = JSON.parse(result.rows[0][0] || '[]');
+    const puns = JSON.parse(result.rows[0][1] || '[]');
 
     const rulesList = document.getElementById('rulesList');
     const punsList = document.getElementById('punsList');
