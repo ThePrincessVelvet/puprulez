@@ -1,7 +1,7 @@
 // Puprulez - Complete with Home/Edit/View
 
 // TODO: Replace with your Turso SQLite details
-const TURSO_URL = 'libsql://puprulez-theprincessvelvet.aws-us-east-1.turso.io';
+const TURSO_URL = 'https://puprulez-theprincessvelvet.aws-us-east-1.turso.io';
 const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzQ4NDUyODAsImlkIjoiMDE5ZDNjZjEtNjgwMS03OWIwLWFhYzYtYWYzMTcwNjJlNDJmIiwicmlkIjoiZmFlODFjZTAtZDFjYy00OWM2LWEyZGQtMDMxOWJiNjBmNzQ3In0.b_yDpj0R498E4GglGYjxFjUxN7XsMLR_JsbehGo_1FN_yV8zweFOOaWX7eFZ3h5w4yw-8HjxhcLLjHf030U5DQ';
 
 async function runSQL(sql, args = []) {
