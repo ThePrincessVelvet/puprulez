@@ -2,7 +2,7 @@
 
 // TODO: Replace with your Supabase Project URL and Anon Key
 const SUPABASE_URL = 'https://wtdutuviptkwdehdpzhu.supabase.co';
-const SUPABASE_KEY = 'sb_secret_A98qptbJhwhDaV4f8LAWhQ_C88vHPAH';
+const SUPABASE_KEY = 'sb_secret_dxx0h4eeY3Wqa2pLgMNK-w_gveWpMkG';
 
 const _supabase = window.supabase ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
