@@ -5,24 +5,29 @@ const TURSO_URL = 'https://puprulez-theprincessvelvet.aws-us-east-1.turso.io';
 const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzQ4NDM5NTgsImlkIjoiMDE5ZDNjZjEtNjgwMS03OWIwLWFhYzYtYWYzMTcwNjJlNDJmIiwicmlkIjoiZmFlODFjZTAtZDFjYy00OWM2LWEyZGQtMDMxOWJiNjBmNzQ3In0.QWXgbPycWMiSxRVmlavU8euqVv5UKs82xTNE_6WjhghAx-J3EKzgFM699wW7CRej6wZ_nsU1St7vPEDd87BQCA';
 
 async function runSQL(sql, args = []) {
-    const response = await fetch(`${TURSO_URL}/v2/pipeline`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${TURSO_TOKEN}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            requests: [
-                { type: 'execute', stmt: { sql, args } },
-                { type: 'close' }
-            ]
-        })
-    });
-    const data = await response.json();
-    if (data.results && data.results[0].response.result) {
-        return data.results[0].response.result;
+    try {
+        const response = await fetch(`${TURSO_URL}/v2/pipeline`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${TURSO_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                requests: [
+                    { type: 'execute', stmt: { sql, args } },
+                    { type: 'close' }
+                ]
+            })
+        });
+        const data = await response.json();
+        if (data.results && data.results[0].response.type === 'execute') {
+            return data.results[0].response.result;
+        }
+        return null;
+    } catch (err) {
+        console.error('SQL Error:', err);
+        return null;
     }
-    return null;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -66,24 +71,34 @@ async function createPage() {
     if (!name || !name.trim()) return;
     
     const pageName = name.trim();
-
-    // Check if rulepage already exists in SQLite
-    const result = await runSQL('SELECT name FROM rulepages WHERE name = ?', [pageName]);
     
-    if (result && result.rows.length > 0) {
-        alert('This name is already taken, please choose a different one.');
-        return;
+    try {
+        // Check if rulepage already exists in SQLite
+        const result = await runSQL('SELECT name FROM rulepages WHERE name = ?', [pageName]);
+        
+        if (result && result.rows && result.rows.length > 0) {
+            alert('This name is already taken, please choose a different one.');
+            return;
+        }
+
+        const password = prompt('Create a Password:');
+        if (!password) return;
+
+        // Save to SQLite
+        const insertResult = await runSQL('INSERT INTO rulepages (name, pass, rules, puns) VALUES (?, ?, "[]", "[]")', [pageName, password]);
+        
+        if (insertResult === null && pageName) {
+            // If insertResult is null but we had no error thrown, it's possible the table doesn't exist
+            console.warn('Possible issue saving to database.');
+        }
+
+        localStorage.setItem(pageName + '_pass', password);
+        localStorage.setItem('currentPage', pageName);
+        location.href = '?page=' + encodeURIComponent(pageName);
+    } catch (err) {
+        alert('Failed to connect to the database. Please check your internet or database settings.');
+        console.error(err);
     }
-
-    const password = prompt('Create a Password:');
-    if (!password) return;
-
-    // Save to SQLite
-    await runSQL('INSERT INTO rulepages (name, pass, rules, puns) VALUES (?, ?, "[]", "[]")', [pageName, password]);
-
-    localStorage.setItem(pageName + '_pass', password);
-    localStorage.setItem('currentPage', pageName);
-    location.href = '?page=' + encodeURIComponent(pageName);
 }
 
 async function editPage() {
