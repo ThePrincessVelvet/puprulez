@@ -73,8 +73,8 @@ function editPage() {
 
 function showEditPage(pageName) {
     const pass = localStorage.getItem(pageName + '_pass');
-    // Generates full URL for GitHub Pages
-    const viewLink = window.location.origin + window.location.pathname + '?view=' + encodeURIComponent(pageName) + '#' + pass;
+    // Generates full URL without the password hash for a cleaner link
+    const viewLink = window.location.origin + window.location.pathname + '?view=' + encodeURIComponent(pageName);
     localStorage.setItem('currentPage', pageName);
     
     document.querySelector('.container').innerHTML = `
@@ -115,8 +115,13 @@ function showEditPage(pageName) {
     loadLists(pageName);
 }
 
-function showViewPage(pageName, pass) {
+function showViewPage(pageName, urlPass) {
     const storedPass = localStorage.getItem(pageName + '_pass');
+    // If password isn't in URL hash, prompt the user for it
+    let pass = urlPass || prompt('🔓 Enter password to view this rulepage:');
+    
+    if (pass === null) { location.href = '?'; return; } // Go home if canceled
+
     if (!storedPass || pass !== storedPass) {
         document.querySelector('.container').innerHTML = '<h1 class="title" style="color:#ff1493;">🔒 LOCKED</h1><p class="subtitle">Wrong password, puppy!</p>';
         return;
@@ -155,17 +160,20 @@ function addItem(type) {
     const text = input.value.trim();
     if (text) {
         const item = document.createElement('div');
+        const currentPage = localStorage.getItem('currentPage');
         item.className = type + '-item';
-        item.innerHTML = `<span>${text}</span> <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>`;
+        item.innerHTML = `<span>${text}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${currentPage}')">✕</button>`;
         list.appendChild(item);
         input.value = '';
-        savePage(localStorage.getItem('currentPage'));
+        savePage(currentPage);
     }
 }
 
 function savePage(pageName) {
-    const rules = Array.from(document.querySelectorAll('#rulesList .rule-item')).map(item => item.textContent.replace('✕', '').trim());
-    const puns = Array.from(document.querySelectorAll('#punsList .punishment-item')).map(item => item.textContent.replace('✕', '').trim());
+    // More reliable selection using the span tag
+    const rules = Array.from(document.querySelectorAll('#rulesList .rule-item span')).map(span => span.textContent.trim());
+    const puns = Array.from(document.querySelectorAll('#punsList .punishment-item span')).map(span => span.textContent.trim());
+    
     localStorage.setItem(pageName + '_rules', JSON.stringify(rules));
     localStorage.setItem(pageName + '_puns', JSON.stringify(puns));
     console.log('Saved ' + pageName);
@@ -181,14 +189,14 @@ function loadLists(pageName) {
     rules.forEach(rule => {
         const item = document.createElement('div');
         item.className = 'rule-item';
-        item.innerHTML = `<span>${rule}</span> <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>`;
+        item.innerHTML = `<span>${rule}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${pageName}')">✕</button>`;
         rulesList.appendChild(item);
     });
     
     puns.forEach(pun => {
         const item = document.createElement('div');
         item.className = 'punishment-item';
-        item.innerHTML = `<span>${pun}</span> <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>`;
+        item.innerHTML = `<span>${pun}</span> <button class="remove-btn" onclick="this.parentElement.remove(); savePage('${pageName}')">✕</button>`;
         punsList.appendChild(item);
     });
 }
